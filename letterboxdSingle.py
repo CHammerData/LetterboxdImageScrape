@@ -5,15 +5,16 @@ Portion of the Python Web Scraper for letterboxd. Used this file to develop sing
 import sys
 import requests
 from bs4 import BeautifulSoup
+import os
 
-
-#Base URL for your diary
-def image_link_func(links):
-	image_links = []
+def get_image_func(links):
+	# Fetch username and desktop local
+	username = os.getlogin()
+	#Create temporary file for images
+	location = 'C:\\Users\\'+username+'\\Desktop\\TempImageHolder'
+	os.mkdir(location)
+	x=1
 	for link in links:
-		URL = 'https://letterboxd.com' + link
-		page = requests.get(URL)
-		soup = BeautifulSoup(page.content, 'html.parser')
-		poster = soup.find('div', class_= 'film-poster')
-		image_link = poster.find('img', itemprop="image").get('src')
-		image_links.append(image_link)
+		r = requests.get(link)
+		open(location'\\'+x+'.jpg', 'wb').write(r.content)
+		x++

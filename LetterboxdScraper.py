@@ -5,6 +5,7 @@ import sys
 import math
 import requests
 from bs4 import BeautifulSoup
+import os
 
 def film_link_func(base_link, pages):
 	link_list = []
@@ -30,6 +31,17 @@ def image_link_func(links):
 
 	return image_links
 
+def get_image_func(links):
+	# Fetch username and desktop local
+	username = os.getlogin()
+	#Create temporary file for images
+	location = 'C:\\Users\\'+username+'\\Desktop\\TempImageHolder'
+	os.mkdir(location)
+	x=1
+	for link in links:
+		r = requests.get(link)
+		open(location+'\\'+str(x)+'.jpg', 'wb').write(r.content)
+		x += 1
 
 #Check for year paramater
 
@@ -63,8 +75,14 @@ print(str(entries) + ' entires spread over '+ str(pages) +' page(s)')
 
 film_pages = film_link_func(mainlink, pages)
 
-print(film_pages)
+#print(film_pages)
+print('Film Page Links: DONE')
 
 image_links = image_link_func(film_pages)
 
-print(*image_links, sep = "\n")
+#print(*image_links, sep = "\n")
+print('Film Poster Links: DONE')
+
+get_image_func(image_links)
+
+print('Film Poster Downloads: DONE')
