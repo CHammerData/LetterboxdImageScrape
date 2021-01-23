@@ -3,18 +3,21 @@ Portion of the Python Web Scraper for letterboxd. Used this file to develop sing
 '''
 
 import sys
-import requests
-from bs4 import BeautifulSoup
 import os
+from PIL import Image as image
 
-def get_image_func(links):
-	# Fetch username and desktop local
-	username = os.getlogin()
-	#Create temporary file for images
-	location = 'C:\\Users\\'+username+'\\Desktop\\TempImageHolder'
-	os.mkdir(location)
-	x=1
-	for link in links:
-		r = requests.get(link)
-		open(location'\\'+x+'.jpg', 'wb').write(r.content)
-		x++
+def makeimages(images, path):
+	imagestart = 1
+
+imagestart = 1
+images = 4
+file_path = 'C:\\Users\\chris\\Desktop\\testfolder'
+imagecount = len(os.listdir('C:\\Users\\chris\\Desktop\\testfolder'))
+
+im = image.open('C:\\Users\\chris\\Desktop\\testfolder\\1.jpg')
+#Make Black Filler Image
+black = image.new('RGB', im.size, (0,0,0))
+
+black.save('C:\\Users\\chris\\Desktop\\testfolder\\black.jpg')
+
+for pic in range(imagestart, imagestart-1
