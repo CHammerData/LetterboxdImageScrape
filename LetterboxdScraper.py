@@ -7,6 +7,36 @@ import math
 import requests
 from bs4 import BeautifulSoup
 import os
+import shutil
+
+'''
+
+Functions
+
+'''
+
+def system_setup():
+	#getting username for file locations
+	username = getpass.getuser()
+
+	#creating path for image staging and final images
+	if sys.platform == 'darwin':
+		staginglocation = '/Users/'+username+'/Desktop/TempImageHolder'
+		finallocation = '/Users/'+username+'/Desktop/FinalImages'
+	elif sys.platform == 'win32':
+		staginglocation = 'C:\\Users\\'+username+'\\Desktop\\TempImageHolder'
+		finallocation = 'C:\\Users\\'+username+'\\Desktop\\FinalImages'
+	
+	#checking if the directory already exsists and clearing it if it does
+	if os.path.exists(staginglocation):
+		shutil.rmtree(staginglocation)
+	os.mkdir(staginglocation)
+	if os.path.exists(finallocation):
+		shutil.rmtree(finallocation)
+	os.mkdir(finallocation)
+
+	return staginglocation, finallocation
+
 
 def film_link_func(base_link, pages):
 	link_list = []
@@ -32,15 +62,7 @@ def image_link_func(links):
 
 	return image_links
 
-def get_image_func(links):
-	# Fetch username and desktop local
-	username = getpass.getuser()
-	#Create temporary file for images; if statement handles difference between windows and mac
-	if sys.platform == 'darwin':
-		location = '/Users/'+username+'/Desktop/TempImageHolder'
-	elif sys.platform == 'win32':
-		location = 'C:\\Users\\'+username+'\\Desktop\\TempImageHolder'
-	os.mkdir(location)
+def get_image_func(links, location):
 	
 	for x, link in enumerate(links,1):
 		r = requests.get(link)
@@ -49,8 +71,13 @@ def get_image_func(links):
 		elif sys.platform == 'win32':
 			open(location+'\\'+str(x)+'.jpg', 'wb').write(r.content)
 
-#Check for year paramater
+'''
 
+Running code for the script
+
+'''
+
+#Check for year paramater
 if len(sys.argv) > 2:
 	year = sys.argv[2]
 else:
@@ -66,11 +93,8 @@ soup = BeautifulSoup(page.content, 'html.parser')
 # Get the total Number of entries
 
 results = str(soup.find('h2', class_='ui-block-heading'))
-
 start = results.find('logged ') + 7
-
 end = results.find('entries') - 1
-
 entries = int(results[start:end])
 
 # Calculate the number of pages
@@ -79,9 +103,8 @@ pages = math.ceil(entries/50)
 #Test print statment to check entries and page number logic
 print(str(entries) + ' entires spread over '+ str(pages) +' page(s)')
 
+#get the film individual pages
 film_pages = film_link_func(mainlink, pages)
-
-#print(film_pages)
 print('Film Page Links: DONE')
 
 image_links = image_link_func(film_pages)
@@ -89,6 +112,8 @@ image_links = image_link_func(film_pages)
 #print(*image_links, sep = "\n")
 print('Film Poster Links: DONE')
 
-get_image_func(image_links)
+temp, final = system_setup()
+
+get_image_func(image_links, temp)
 
 print('Film Poster Downloads: DONE')

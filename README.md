@@ -4,4 +4,4 @@ A quick script i'm building to build shareable images off of a letterboxd.com di
 
 Built using Beautiful soup and requests, nothing particualrly interesting happening here. 
 
-The main file is letterboxdscraper.py. The other two files are essentially scratch paper or alternative paths that I decided against.
+The main file is letterboxdscraper.py. The other two files are essentially scratch paper or alternate paths that I decided against.
