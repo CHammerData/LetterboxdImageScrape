@@ -37,11 +37,28 @@ def system_setup():
 
 	return staginglocation, finallocation
 
+#given the url of a letterboxd diary returns the number of pages the entries will be spread over
+def page_count(url):
+	page = requests.get(url)
+
+	soup = BeautifulSoup(page.content, 'html.parser')
+
+	# Get the total Number of entries
+	results = str(soup.find('h2', class_='ui-block-heading'))
+	start = results.find('logged ') + 7
+	end = results.find('entries') - 1
+	entries = int(results[start:end])
+
+	# Calculate the number of pages
+	pages = math.ceil(entries/50)
+
+	return pages
+
 
 def film_link_func(base_link, pages):
 	link_list = []
 	for page in range(1, pages+1):
-		URL = base_link+str(page)
+		URL = base_link+'/page/'+str(page)
 		page = requests.get(URL)
 		soup = BeautifulSoup(page.content, 'html.parser')
 		for link in soup.find_all('td'):
@@ -84,21 +101,10 @@ else:
 	year = '2021'
 
 #Base URL for your diary
-mainlink= 'https://letterboxd.com/'+sys.argv[1]+'/films/diary/for/'+year+'/page/'
-URL = 'https://letterboxd.com/'+sys.argv[1]+'/films/diary/for/'+year
-page = requests.get(URL)
+url = 'https://letterboxd.com/'+sys.argv[1]+'/films/diary/for/'+year
 
-soup = BeautifulSoup(page.content, 'html.parser')
-
-# Get the total Number of entries
-
-results = str(soup.find('h2', class_='ui-block-heading'))
-start = results.find('logged ') + 7
-end = results.find('entries') - 1
-entries = int(results[start:end])
-
-# Calculate the number of pages
-pages = math.ceil(entries/50)
+#get teh number of pages
+pages = page_count(url)
 
 #Test print statment to check entries and page number logic
 print(str(entries) + ' entires spread over '+ str(pages) +' page(s)')
