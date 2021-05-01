@@ -2,6 +2,7 @@
 Python Web Scraper for letterboxd
 '''
 import sys
+import getpass
 import math
 import requests
 from bs4 import BeautifulSoup
@@ -33,22 +34,27 @@ def image_link_func(links):
 
 def get_image_func(links):
 	# Fetch username and desktop local
-	username = os.getlogin()
-	#Create temporary file for images
-	location = 'C:\\Users\\'+username+'\\Desktop\\TempImageHolder'
+	username = getpass.getuser()
+	#Create temporary file for images; if statement handles difference between windows and mac
+	if sys.platform == 'darwin':
+		location = '/Users/'+username+'/Desktop/TempImageHolder'
+	elif sys.platform == 'win32':
+		location = 'C:\\Users\\'+username+'\\Desktop\\TempImageHolder'
 	os.mkdir(location)
-	x=1
-	for link in links:
+	
+	for x, link in enumerate(links,1):
 		r = requests.get(link)
-		open(location+'\\'+str(x)+'.jpg', 'wb').write(r.content)
-		x += 1
+		if sys.platform == 'darwin':
+			open(location+'/'+str(x)+'.jpg', 'wb').write(r.content)
+		elif sys.platform == 'win32':
+			open(location+'\\'+str(x)+'.jpg', 'wb').write(r.content)
 
 #Check for year paramater
 
 if len(sys.argv) > 2:
 	year = sys.argv[2]
 else:
-	year = '2020'
+	year = '2021'
 
 #Base URL for your diary
 mainlink= 'https://letterboxd.com/'+sys.argv[1]+'/films/diary/for/'+year+'/page/'
