@@ -6,15 +6,16 @@ import sys
 import os
 from PIL import Image as image
 
-def makeimages(images, path):
-	imagestart = 1
+def makeimages(image_count, image_dir, final_image_dir:
+	image_total = len(os.listdir(image_dir))
+	
 
 imagestart = 1
 images = 4
 file_path = 'C:\\Users\\chris\\Desktop\\testfolder'
 imagecount = len(os.listdir('C:\\Users\\chris\\Desktop\\testfolder'))
 
-im = image.open('C:\\Users\\chris\\Desktop\\testfolder\\1.jpg')
+im = image.open(os.listdir(path)[0])
 #Make Black Filler Image
 black = image.new('RGB', im.size, (0,0,0))
 

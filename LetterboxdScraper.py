@@ -8,6 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import shutil
+from PIL import Image as image
 
 '''
 
@@ -52,7 +53,7 @@ def page_count(url):
 	# Calculate the number of pages
 	pages = math.ceil(entries/50)
 
-	return pages
+	return pages, entries
 
 
 def film_link_func(base_link, pages):
@@ -83,10 +84,18 @@ def get_image_func(links, location):
 	
 	for x, link in enumerate(links,1):
 		r = requests.get(link)
-		if sys.platform == 'darwin':
-			open(location+'/'+str(x)+'.jpg', 'wb').write(r.content)
-		elif sys.platform == 'win32':
-			open(location+'\\'+str(x)+'.jpg', 'wb').write(r.content)
+		open(os.path.join(location, str(x)+'.jpg'), 'wb').write(r.content)
+
+def makeimages(image_count, image_dir, final_image_dir):
+	image_total = len(os.listdir(image_dir))
+
+	#Make Black Filler Image
+	im = image.open(os.path.join(image_dir,os.listdir(image_dir)[0]))
+	black = image.new('RGB', im.size, (0,0,0))
+	black.save(os.path.join(image_dir, 'black.jpg'))
+
+	return image_total
+
 
 '''
 
@@ -104,13 +113,13 @@ else:
 url = 'https://letterboxd.com/'+sys.argv[1]+'/films/diary/for/'+year
 
 #get teh number of pages
-pages = page_count(url)
+pages, entries = page_count(url)
 
 #Test print statment to check entries and page number logic
 print(str(entries) + ' entires spread over '+ str(pages) +' page(s)')
 
 #get the film individual pages
-film_pages = film_link_func(mainlink, pages)
+film_pages = film_link_func(url, pages)
 print('Film Page Links: DONE')
 
 image_links = image_link_func(film_pages)
@@ -123,3 +132,7 @@ temp, final = system_setup()
 get_image_func(image_links, temp)
 
 print('Film Poster Downloads: DONE')
+
+images = makeimages(4, temp, final)
+
+print(images)
