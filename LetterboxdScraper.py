@@ -81,7 +81,7 @@ def image_link_func(links):
 	return image_links
 
 def get_image_func(links, location):
-	
+
 	for x, link in enumerate(links,1):
 		r = requests.get(link)
 		open(os.path.join(location, str(x)+'.jpg'), 'wb').write(r.content)
@@ -94,7 +94,16 @@ def makeimages(image_count, image_dir, final_image_dir):
 	black = image.new('RGB', im.size, (0,0,0))
 	black.save(os.path.join(image_dir, 'black.jpg'))
 
-	return image_total
+	images=[]
+	assigned = 0
+	for x in range(image_count-1):
+		temp = math.ceil(math.sqrt((image_total-assigned)/(image_count-x)))**2
+		assigned+=temp
+		images.append(temp)
+
+	images.append(image_total-assigned)
+
+	return images
 
 
 '''
