@@ -86,7 +86,7 @@ def get_image_func(links, location):
 		r = requests.get(link)
 		open(os.path.join(location, str(x)+'.jpg'), 'wb').write(r.content)
 
-def makeimages(image_count, image_dir, final_image_dir):
+def make_images(image_count, image_dir, final_image_dir):
 	image_total = len(os.listdir(image_dir))
 
 	#Make Black Filler Image
@@ -94,16 +94,30 @@ def makeimages(image_count, image_dir, final_image_dir):
 	black = image.new('RGB', im.size, (0,0,0))
 	black.save(os.path.join(image_dir, 'black.jpg'))
 
-	images=[]
+	poster_size=[]
 	assigned = 0
 	for x in range(image_count-1):
 		temp = math.ceil(math.sqrt((image_total-assigned)/(image_count-x)))**2
 		assigned+=temp
-		images.append(temp)
+		poster_size.append(temp)
 
-	images.append(image_total-assigned)
+	poster_size.append(image_total-assigned)
 
-	return images
+	used = 0
+	for x in image_count:
+		image = image_build(image_count, used, poster_size[x])
+		used += poster_size[x]
+		open(os.path.join(final_image_dir, str(x)+'.jpg'), 'wb').write(image)
+
+	return poster_size
+
+def image_build(total, used, images)
+	length = math.ceil(math.sqrt(images))
+	start = used
+	end = used + images
+	temprow=[]
+
+	for x in 
 
 
 '''
@@ -142,6 +156,6 @@ get_image_func(image_links, temp)
 
 print('Film Poster Downloads: DONE')
 
-images = makeimages(4, temp, final)
+images = make_images(4, temp, final)
 
 print(images)
