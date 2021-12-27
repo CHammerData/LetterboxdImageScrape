@@ -16,7 +16,9 @@ Functions
 
 '''
 
-# setting up local folder structure for storing of images. Will be gotten rid of in future versions in favor of only holding 1 image at a time and appending to final images
+
+# setting up local folder structure for storing of images. Will be gotten rid of in future versions in favor of only
+# holding 1 image at a time and appending to final images
 def system_setup():
     # getting username for file locations
     username = getpass.getuser()
@@ -58,16 +60,23 @@ def page_count(diary_url):
     return diary_pages, diary_entries
 
 
-def film_link_func(base_link, pages):
+def film_link_func(base_link: str, pages: list, duplicates: bool, chronological: bool) -> list:
     link_list = []
     for page in range(1, pages + 1):
-        URL = base_link + '/page/' + str(page)
-        page = requests.get(URL)
+        url = base_link + '/page/' + str(page)
+        page = requests.get(url)
         soup = BeautifulSoup(page.content, 'html.parser')
         for link in soup.find_all('td'):
             if link.has_attr('data-film-link'):
                 link_list.append(link.get('data-film-link'))
         print("done with page " + str(page))
+
+    if chronological:
+        link_list.reverse()
+
+    if duplicates:
+        link_list = list(dict.fromkeys(link_list))
+
     return link_list
 
 
@@ -118,7 +127,7 @@ def image_build(file_path, used, images):
 
     width = im.size[0]
     height = im.size[1]
-    if images + math.ceil(math.sqrt(images)) < math.ceil(math.sqrt(images))**2:
+    if images + math.ceil(math.sqrt(images)) < math.ceil(math.sqrt(images)) ** 2:
         fill_height = height * (math.ceil(math.sqrt(images)) - 1)
     else:
         fill_height = height * math.ceil(math.sqrt(images))
@@ -160,7 +169,7 @@ pages, entries = page_count(url)
 print(str(entries) + ' entries spread over ' + str(pages) + ' page(s)')
 
 # get the film individual pages
-film_pages = film_link_func(url, pages)
+film_pages = film_link_func(url, pages, True, True)
 print('Film Page Links: DONE')
 
 poster_links = image_link_func(film_pages)
