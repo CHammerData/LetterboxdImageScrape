@@ -60,18 +60,18 @@ def page_count(diary_url):
     return diary_pages, diary_entries
 
 
-def film_link_func(base_link: str, pages: list, duplicates: bool, chronological: bool) -> list:
+def film_link_func(base_link: str, pages: list, duplicates: bool, sort: str) -> list:
     link_list = []
     for page in range(1, pages + 1):
-        url = base_link + '/page/' + str(page)
-        page = requests.get(url)
+        film_url = base_link + '/page/' + str(page)
+        page = requests.get(film_url)
         soup = BeautifulSoup(page.content, 'html.parser')
         for link in soup.find_all('td'):
             if link.has_attr('data-film-link'):
                 link_list.append(link.get('data-film-link'))
         print("done with page " + str(page))
 
-    if chronological:
+    if sort == 'Chronological':
         link_list.reverse()
 
     if duplicates:
@@ -147,42 +147,41 @@ def image_build(file_path, used, images):
     return main.resize((width * 4, int(height * 4 * (fill_height / (height * math.ceil(math.sqrt(images)))))))
 
 
+def runner(poster_type, username, year, duplicates, sort):
+    if poster_type == 'Diary':
+        # Base URL for your diary
+        url = 'https://letterboxd.com/' + username + '/films/diary/for/' + year
+    # add logic for lists and other methods here
+
+    # get the number of pages
+    pages, entries = page_count(url)
+
+    # Test print statement to check entries and page number logic
+    print(str(entries) + ' entries spread over ' + str(pages) + ' page(s)')
+
+    # get the film individual pages
+    film_pages = film_link_func(url, pages, duplicates, sort)
+    print('Film Page Links: DONE')
+
+    poster_links = image_link_func(film_pages)
+
+    # print(*image_links, sep = "\n")
+    print('Film Poster Links: DONE')
+
+    temp, final = system_setup()
+
+    get_image_func(poster_links, temp)
+
+    print('Film Poster Downloads: DONE')
+
+    images = make_images(4, temp, final)
+
+    print(images)
+
+
 '''
 
-Running code for the script
+Running as script
 
 '''
-
-# Check for year parameter
-if len(sys.argv) > 2:
-    year = sys.argv[2]
-else:
-    year = '2021'
-
-# Base URL for your diary
-url = 'https://letterboxd.com/' + sys.argv[1] + '/films/diary/for/' + year
-
-# get teh number of pages
-pages, entries = page_count(url)
-
-# Test print statement to check entries and page number logic
-print(str(entries) + ' entries spread over ' + str(pages) + ' page(s)')
-
-# get the film individual pages
-film_pages = film_link_func(url, pages, True, True)
-print('Film Page Links: DONE')
-
-poster_links = image_link_func(film_pages)
-
-# print(*image_links, sep = "\n")
-print('Film Poster Links: DONE')
-
-temp, final = system_setup()
-
-get_image_func(poster_links, temp)
-
-print('Film Poster Downloads: DONE')
-
-images = make_images(4, temp, final)
-
-print(images)
+runner('Diary', 'HammerPatriot', '2021', False, 'Chronological')
