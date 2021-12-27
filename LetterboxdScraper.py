@@ -93,11 +93,6 @@ def get_image_func(links, location):
 def make_images(image_count, image_dir, final_image_dir):
     image_total = len(os.listdir(image_dir))
 
-    # Make Black Filler Image
-    im = ImageLib.open(os.path.join(image_dir, os.listdir(image_dir)[0]))
-    black = ImageLib.new('RGB', im.size, (0, 0, 0))
-    black.save(os.path.join(image_dir, 'black.jpg'))
-
     poster_size = []
     assigned = 0
     for x in range(image_count - 1):
@@ -108,21 +103,39 @@ def make_images(image_count, image_dir, final_image_dir):
     poster_size.append(image_total - assigned)
 
     used = 0
-    for x in range(image_count - 1):
-        image = image_build(image_count, used, poster_size[x])
+    for x in range(image_count):
+        image = image_build(image_dir, used, poster_size[x])
+        image.save(os.path.join(final_image_dir, str(x) + '.jpg'))
         used += poster_size[x]
-        open(os.path.join(final_image_dir, str(x) + '.jpg'), 'wb').write(image)
 
     return poster_size
 
 
-def image_build(total, used, images)
-	length = math.ceil(math.sqrt(images))
-	start = used
-	end = used + images
-	temprow=[]
+def image_build(file_path, used, images):
+    image_start = used + 1
 
-	for x in
+    im = ImageLib.open(os.path.join(file_path, os.listdir(file_path)[0]))
+
+    width = im.size[0]
+    height = im.size[1]
+    if images + math.ceil(math.sqrt(images)) < math.ceil(math.sqrt(images))**2:
+        fill_height = height * (math.ceil(math.sqrt(images)) - 1)
+    else:
+        fill_height = height * math.ceil(math.sqrt(images))
+    # Make Black Filler Image
+    fill_image = ImageLib.new('RGB', (width * math.ceil(math.sqrt(images)), fill_height), (0, 0, 0))
+
+    fill_image.save(os.path.join(file_path, 'fill.jpg'))
+
+    for pic in range(0, images):
+        x = (pic % math.ceil(math.sqrt(images))) * width
+        y = (math.floor(pic / math.ceil(math.sqrt(images)))) * height
+        main = ImageLib.open(os.path.join(file_path, 'fill.jpg'))
+        main.paste(ImageLib.open(os.path.join(file_path, str(image_start + pic) + '.jpg')), (x, y))
+        main.save(os.path.join(file_path, 'fill.jpg'))
+
+    main = ImageLib.open(os.path.join(file_path, 'fill.jpg'))
+    return main.resize((width * 4, int(height * 4 * (fill_height / (height * math.ceil(math.sqrt(images)))))))
 
 
 '''
