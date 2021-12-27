@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import shutil
-from PIL import Image as image
+from PIL import Image as ImageLib
 
 '''
 
@@ -16,7 +16,7 @@ Functions
 
 '''
 
-
+# setting up local folder structure for storing of images. Will be gotten rid of in future versions in favor of only holding 1 image at a time and appending to final images
 def system_setup():
     # getting username for file locations
     username = getpass.getuser()
@@ -29,7 +29,7 @@ def system_setup():
         staging_location = 'C:\\Users\\' + username + '\\Desktop\\TempImageHolder'
         final_location = 'C:\\Users\\' + username + '\\Desktop\\FinalImages'
 
-    # checking if the directory already exsists and clearing it if it does
+    # checking if the directory already exists and clearing it if it does
     if os.path.exists(staging_location):
         shutil.rmtree(staging_location)
     os.mkdir(staging_location)
@@ -41,21 +41,21 @@ def system_setup():
 
 
 # given the url of a letterboxd diary returns the number of pages the entries will be spread over
-def page_count(url):
-    page = requests.get(url)
+def page_count(diary_url):
+    web_page = requests.get(diary_url)
 
-    soup = BeautifulSoup(page.content, 'html.parser')
+    soup = BeautifulSoup(web_page.content, 'html.parser')
 
     # Get the total Number of entries
     results = str(soup.find('h2', class_='ui-block-heading'))
     start = results.find('logged ') + 7
     end = results.find('entries') - 1
-    entries = int(results[start:end])
+    diary_entries = int(results[start:end])
 
     # Calculate the number of pages
-    pages = math.ceil(entries / 50)
+    diary_pages = math.ceil(diary_entries / 50)
 
-    return pages, entries
+    return diary_pages, diary_entries
 
 
 def film_link_func(base_link, pages):
@@ -71,17 +71,17 @@ def film_link_func(base_link, pages):
     return link_list
 
 
-def image_link_func(links):
-    image_links = []
-    for link in links:
-        URL = 'https://letterboxd.com' + link
-        page = requests.get(URL)
+def image_link_func(image_links):
+    link_array = []
+    for link in image_links:
+        image_address = 'https://letterboxd.com' + link
+        page = requests.get(image_address)
         soup = BeautifulSoup(page.content, 'html.parser')
         poster = soup.find('div', class_='film-poster')
-        image_link = poster.find('img', itemprop="image").get('src')
-        image_links.append(image_link)
+        image_link = poster.find('img', itemprop='image').get('src')
+        link_array.append(image_link)
 
-    return image_links
+    return link_array
 
 
 def get_image_func(links, location):
@@ -94,8 +94,8 @@ def make_images(image_count, image_dir, final_image_dir):
     image_total = len(os.listdir(image_dir))
 
     # Make Black Filler Image
-    im = image.open(os.path.join(image_dir, os.listdir(image_dir)[0]))
-    black = image.new('RGB', im.size, (0, 0, 0))
+    im = ImageLib.open(os.path.join(image_dir, os.listdir(image_dir)[0]))
+    black = ImageLib.new('RGB', im.size, (0, 0, 0))
     black.save(os.path.join(image_dir, 'black.jpg'))
 
     poster_size = []
@@ -108,7 +108,7 @@ def make_images(image_count, image_dir, final_image_dir):
     poster_size.append(image_total - assigned)
 
     used = 0
-    for x in image_count:
+    for x in range(image_count - 1):
         image = image_build(image_count, used, poster_size[x])
         used += poster_size[x]
         open(os.path.join(final_image_dir, str(x) + '.jpg'), 'wb').write(image)
@@ -116,13 +116,13 @@ def make_images(image_count, image_dir, final_image_dir):
     return poster_size
 
 
-# def image_build(total, used, images)
-# 	length = math.ceil(math.sqrt(images))
-# 	start = used
-# 	end = used + images
-# 	temprow=[]
-# 
-# 	for x in 
+def image_build(total, used, images)
+	length = math.ceil(math.sqrt(images))
+	start = used
+	end = used + images
+	temprow=[]
+
+	for x in
 
 
 '''
@@ -150,14 +150,14 @@ print(str(entries) + ' entries spread over ' + str(pages) + ' page(s)')
 film_pages = film_link_func(url, pages)
 print('Film Page Links: DONE')
 
-image_links = image_link_func(film_pages)
+poster_links = image_link_func(film_pages)
 
 # print(*image_links, sep = "\n")
 print('Film Poster Links: DONE')
 
 temp, final = system_setup()
 
-get_image_func(image_links, temp)
+get_image_func(poster_links, temp)
 
 print('Film Poster Downloads: DONE')
 
