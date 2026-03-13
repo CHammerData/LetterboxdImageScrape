@@ -25,8 +25,8 @@ IMPERSONATE: str = "chrome"  # curl_cffi browser profile — bypasses Cloudflare
 SortOrder = Literal[
     "recent",               # newest watch date first (Letterboxd default)
     "chronological",        # oldest watch date first
-    "personal_rating",      # your personal rating, highest first
-    "personal_rating_asc",  # your personal rating, lowest first
+    "diary_rating",         # diary entry rating, highest first
+    "diary_rating_asc",     # diary entry rating, lowest first
     "letterboxd_rating",    # community average rating, highest first
     "letterboxd_rating_asc",# community average rating, lowest first
     "name",                 # film title, A → Z
@@ -42,8 +42,8 @@ SortOrder = Literal[
 SORT_URL_SLUGS: dict[str, str | None] = {
     "recent":                None,
     "chronological":         "date-earliest",
-    "personal_rating":       "entry-rating",
-    "personal_rating_asc":   "entry-rating-lowest",
+    "diary_rating":       "entry-rating",
+    "diary_rating_asc":   "entry-rating-lowest",
     "letterboxd_rating":     "rating",
     "letterboxd_rating_asc": "rating-lowest",
     "name":                  "name",

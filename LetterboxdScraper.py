@@ -90,8 +90,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=[
             "chronological",         # oldest watch date first
             "recent",                # newest watch date first
-            "personal_rating",       # your rating, highest first
-            "personal_rating_asc",   # your rating, lowest first
+            "diary_rating",       # diary entry rating, highest first
+            "diary_rating_asc",   # diary entry rating, lowest first
             "letterboxd_rating",     # community rating, highest first
             "letterboxd_rating_asc", # community rating, lowest first
             "name",                  # film title A → Z
@@ -105,7 +105,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         metavar="SORT",
         help=(
             "Film ordering in collages (default: %(default)s). "
-            "Choices: chronological, recent, personal_rating, personal_rating_asc, "
+            "Choices: chronological, recent, diary_rating, diary_rating_asc, "
             "letterboxd_rating, letterboxd_rating_asc, name, release_year, "
             "runtime, runtime_desc, popularity, shuffle."
         ),

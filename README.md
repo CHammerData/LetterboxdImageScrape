@@ -57,8 +57,8 @@ python LetterboxdScraper.py <username> [options]
 |---|---|
 | `chronological` | Oldest watch date first |
 | `recent` | Newest watch date first |
-| `personal_rating` | Your rating, highest first |
-| `personal_rating_asc` | Your rating, lowest first |
+| `diary_rating` | Diary entry rating, highest first |
+| `diary_rating_asc` | Diary entry rating, lowest first |
 | `letterboxd_rating` | Community average rating, highest first |
 | `letterboxd_rating_asc` | Community average rating, lowest first |
 | `name` | Film title, A → Z |
