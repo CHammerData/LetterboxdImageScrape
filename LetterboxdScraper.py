@@ -1,187 +1,156 @@
 """
-Python Web Scraper for letterboxd
+LetterboxdScraper.py
+====================
+CLI entry point.  All scraping and composition logic lives in the
+``letterboxd_scraper`` package — this file is a thin argument-parsing wrapper.
+
+Usage:
+    python LetterboxdScraper.py <username> [--year YEAR] [--images N]
+                                [--no-duplicates] [--sort {chronological,recent}]
+                                [--output DIR] [-v]
 """
-import sys
-import getpass
-import math
-import requests
-from bs4 import BeautifulSoup
-import os
-import shutil
-from PIL import Image as ImageLib
 
-'''
+from __future__ import annotations
 
-Functions
+import argparse
+import logging
+from pathlib import Path
 
-'''
+from letterboxd_scraper import (
+    PHASE_COMPOSE,
+    PHASE_DIARY,
+    PHASE_DOWNLOAD,
+    PHASE_POSTERS,
+    ScraperConfig,
+    run,
+)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger(__name__)
 
-# setting up local folder structure for storing of images. Will be gotten rid of in future versions in favor of only
-# holding 1 image at a time and appending to final images
-def system_setup():
-    # getting username for file locations
-    username = getpass.getuser()
-
-    # creating path for image staging and final images
-    if sys.platform == 'darwin':
-        staging_location = '/Users/' + username + '/Desktop/TempImageHolder'
-        final_location = '/Users/' + username + '/Desktop/FinalImages'
-    elif sys.platform == 'win32':
-        staging_location = 'C:\\Users\\' + username + '\\Desktop\\TempImageHolder'
-        final_location = 'C:\\Users\\' + username + '\\Desktop\\FinalImages'
-
-    # checking if the directory already exists and clearing it if it does
-    if os.path.exists(staging_location):
-        shutil.rmtree(staging_location)
-    os.mkdir(staging_location)
-    if os.path.exists(final_location):
-        shutil.rmtree(final_location)
-    os.mkdir(final_location)
-
-    return staging_location, final_location
+# Human-readable labels for each pipeline phase
+_PHASE_LABELS = {
+    PHASE_DIARY: "Scraping diary",
+    PHASE_POSTERS: "Fetching poster URLs",
+    PHASE_DOWNLOAD: "Downloading posters",
+    PHASE_COMPOSE: "Building collages",
+}
 
 
-# given the url of a letterboxd diary returns the number of pages the entries will be spread over
-def page_count(diary_url):
-    web_page = requests.get(diary_url)
+def save_collages(collages: list, output_dir: Path) -> list[Path]:
+    """Save a list of PIL Images to *output_dir* as ``0.jpg``, ``1.jpg``, …
 
-    soup = BeautifulSoup(web_page.content, 'html.parser')
+    Args:
+        collages:   Finished collage PIL Images from :func:`~letterboxd_scraper.run`.
+        output_dir: Directory to write into (created if it does not exist).
 
-    # Get the total Number of entries
-    results = str(soup.find('h2', class_='ui-block-heading'))
-    start = results.find('logged ') + 7
-    end = results.find('entries') - 1
-    diary_entries = int(results[start:end])
-
-    # Calculate the number of pages
-    diary_pages = math.ceil(diary_entries / 50)
-
-    return diary_pages, diary_entries
-
-
-def film_link_func(base_link: str, pages: list, duplicates: bool, sort: str) -> list:
-    link_list = []
-    for page in range(1, pages + 1):
-        film_url = base_link + '/page/' + str(page)
-        page = requests.get(film_url)
-        soup = BeautifulSoup(page.content, 'html.parser')
-        for link in soup.find_all('td'):
-            if link.has_attr('data-film-link'):
-                link_list.append(link.get('data-film-link'))
-        print("done with page " + str(page))
-
-    if sort == 'Chronological':
-        link_list.reverse()
-
-    if duplicates:
-        link_list = list(dict.fromkeys(link_list))
-
-    return link_list
+    Returns:
+        List of paths to the saved files.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    saved: list[Path] = []
+    for i, img in enumerate(collages):
+        path = output_dir / f"{i}.jpg"
+        img.save(path)
+        log.info("Saved collage %d → %s", i, path)
+        saved.append(path)
+    return saved
 
 
-def image_link_func(image_links):
-    link_array = []
-    for link in image_links:
-        image_address = 'https://letterboxd.com' + link
-        page = requests.get(image_address)
-        soup = BeautifulSoup(page.content, 'html.parser')
-        poster = soup.find('div', class_='film-poster')
-        image_link = poster.find('img', itemprop='image').get('src')
-        link_array.append(image_link)
-
-    return link_array
-
-
-def get_image_func(links, location):
-    for x, link in enumerate(links, 1):
-        r = requests.get(link)
-        open(os.path.join(location, str(x) + '.jpg'), 'wb').write(r.content)
-
-
-def make_images(image_count, image_dir, final_image_dir):
-    image_total = len(os.listdir(image_dir))
-
-    poster_size = []
-    assigned = 0
-    for x in range(image_count - 1):
-        temp = math.ceil(math.sqrt((image_total - assigned) / (image_count - x))) ** 2
-        assigned += temp
-        poster_size.append(temp)
-
-    poster_size.append(image_total - assigned)
-
-    used = 0
-    for x in range(image_count):
-        image = image_build(image_dir, used, poster_size[x])
-        image.save(os.path.join(final_image_dir, str(x) + '.jpg'))
-        used += poster_size[x]
-
-    return poster_size
-
-
-def image_build(file_path, used, images):
-    image_start = used + 1
-
-    im = ImageLib.open(os.path.join(file_path, os.listdir(file_path)[0]))
-
-    width = im.size[0]
-    height = im.size[1]
-    if images + math.ceil(math.sqrt(images)) < math.ceil(math.sqrt(images)) ** 2:
-        fill_height = height * (math.ceil(math.sqrt(images)) - 1)
-    else:
-        fill_height = height * math.ceil(math.sqrt(images))
-    # Make Black Filler Image
-    fill_image = ImageLib.new('RGB', (width * math.ceil(math.sqrt(images)), fill_height), (0, 0, 0))
-
-    fill_image.save(os.path.join(file_path, 'fill.jpg'))
-
-    for pic in range(0, images):
-        x = (pic % math.ceil(math.sqrt(images))) * width
-        y = (math.floor(pic / math.ceil(math.sqrt(images)))) * height
-        main = ImageLib.open(os.path.join(file_path, 'fill.jpg'))
-        main.paste(ImageLib.open(os.path.join(file_path, str(image_start + pic) + '.jpg')), (x, y))
-        main.save(os.path.join(file_path, 'fill.jpg'))
-
-    main = ImageLib.open(os.path.join(file_path, 'fill.jpg'))
-    return main.resize((width * 4, int(height * 4 * (fill_height / (height * math.ceil(math.sqrt(images)))))))
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog="LetterboxdScraper",
+        description="Build shareable poster collages from a Letterboxd diary.",
+    )
+    parser.add_argument("username", help="Letterboxd username")
+    parser.add_argument(
+        "--year",
+        default="2024",
+        help="Diary year to scrape (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--images",
+        type=int,
+        default=4,
+        dest="image_count",
+        help="Number of output collage images (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--no-duplicates",
+        action="store_true",
+        dest="remove_duplicates",
+        help="Remove duplicate film entries (re-watches)",
+    )
+    parser.add_argument(
+        "--sort",
+        choices=[
+            "chronological",         # oldest watch date first
+            "recent",                # newest watch date first
+            "personal_rating",       # your rating, highest first
+            "personal_rating_asc",   # your rating, lowest first
+            "letterboxd_rating",     # community rating, highest first
+            "letterboxd_rating_asc", # community rating, lowest first
+            "name",                  # film title A → Z
+            "release_year",          # oldest release year first
+            "runtime",               # shortest runtime first
+            "runtime_desc",          # longest runtime first
+            "popularity",            # most popular on Letterboxd first
+            "shuffle",               # random order
+        ],
+        default="chronological",
+        metavar="SORT",
+        help=(
+            "Film ordering in collages (default: %(default)s). "
+            "Choices: chronological, recent, personal_rating, personal_rating_asc, "
+            "letterboxd_rating, letterboxd_rating_asc, name, release_year, "
+            "runtime, runtime_desc, popularity, shuffle."
+        ),
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output directory (default: ./output/<username>_<year>/)",
+    )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable debug logging",
+    )
+    return parser.parse_args(argv)
 
 
-def runner(poster_type, username, year, duplicates, sort):
-    if poster_type == 'Diary':
-        # Base URL for your diary
-        url = 'https://letterboxd.com/' + username + '/films/diary/for/' + year
-    # add logic for lists and other methods here
+if __name__ == "__main__":
+    args = _parse_args()
 
-    # get the number of pages
-    pages, entries = page_count(url)
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
 
-    # Test print statement to check entries and page number logic
-    print(str(entries) + ' entries spread over ' + str(pages) + ' page(s)')
+    config = ScraperConfig(
+        username=args.username,
+        year=args.year,
+        image_count=args.image_count,
+        remove_duplicates=args.remove_duplicates,
+        sort=args.sort,
+    )
 
-    # get the film individual pages
-    film_pages = film_link_func(url, pages, duplicates, sort)
-    print('Film Page Links: DONE')
+    def on_progress(phase: str, current: int, total: int) -> None:
+        label = _PHASE_LABELS.get(phase, phase)
+        log.info("%s: %d / %d", label, current, total)
 
-    poster_links = image_link_func(film_pages)
+    result = run(config, progress=on_progress)
 
-    # print(*image_links, sep = "\n")
-    print('Film Poster Links: DONE')
+    output_dir = args.output or Path("output") / f"{config.username}_{config.year}"
+    save_collages(result.collages, output_dir)
 
-    temp, final = system_setup()
-
-    get_image_func(poster_links, temp)
-
-    print('Film Poster Downloads: DONE')
-
-    images = make_images(4, temp, final)
-
-    print(images)
-
-
-'''
-
-Running as script
-
-'''
-runner('Diary', 'HammerPatriot', '2021', False, 'Chronological')
+    log.info(
+        "Done — %d films, %d posters, distribution: %s",
+        result.film_count,
+        result.poster_count,
+        result.poster_distribution,
+    )
+    log.info("Output saved to: %s", output_dir)
